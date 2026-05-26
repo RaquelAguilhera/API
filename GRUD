@@ -28,42 +28,42 @@ function validarSituacao(situacao) {
 */
 function validarPedido(dados) {
 
-    // CPF obrigatório
+    
     if (!dados.clienteCpf) {
         throw new Error('CPF obrigatório');
     }
 
-    // CPF com 9 números
+    
     if (!/^[0-9]{9}$/.test(dados.clienteCpf)) {
         throw new Error('CPF deve possuir 9 números');
     }
 
-    // Nome cliente obrigatório
+    
     if (!dados.clienteNome) {
         throw new Error('Nome do cliente obrigatório');
     }
 
-    // Nome cliente mínimo 5 caracteres
+  
     if (dados.clienteNome.length < 5) {
         throw new Error('Nome do cliente inválido');
     }
 
-    // Nome produto obrigatório
+    
     if (!dados.produtoNome) {
         throw new Error('Nome do produto obrigatório');
     }
 
-    // Nome produto mínimo 5 caracteres
+    
     if (dados.produtoNome.length < 5) {
         throw new Error('Nome do produto inválido');
     }
 
-    // Preço obrigatório
+    
     if (dados.produtoPreco == null) {
         throw new Error('Preço obrigatório');
     }
 
-    // Preço positivo
+    
     if (dados.produtoPreco <= 0) {
         throw new Error('Preço deve ser positivo');
     }
