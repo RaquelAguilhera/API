@@ -1,0 +1,253 @@
+const express = require('express');
+
+const app = express();
+
+app.use(express.json());
+
+/*
+    Banco em memória
+*/
+const pedidos = [];
+
+let contador = 1;
+
+/*
+    Validar situação
+*/
+function validarSituacao(situacao) {
+
+    const situacoesValidas = ['aberto', 'pago', 'finalizado'];
+
+    if (!situacoesValidas.includes(situacao)) {
+        throw new Error('Situação inválida');
+    }
+}
+
+/*
+    Validar pedido
+*/
+function validarPedido(dados) {
+
+    // CPF obrigatório
+    if (!dados.clienteCpf) {
+        throw new Error('CPF obrigatório');
+    }
+
+    // CPF com 9 números
+    if (!/^[0-9]{9}$/.test(dados.clienteCpf)) {
+        throw new Error('CPF deve possuir 9 números');
+    }
+
+    // Nome cliente obrigatório
+    if (!dados.clienteNome) {
+        throw new Error('Nome do cliente obrigatório');
+    }
+
+    // Nome cliente mínimo 5 caracteres
+    if (dados.clienteNome.length < 5) {
+        throw new Error('Nome do cliente inválido');
+    }
+
+    // Nome produto obrigatório
+    if (!dados.produtoNome) {
+        throw new Error('Nome do produto obrigatório');
+    }
+
+    // Nome produto mínimo 5 caracteres
+    if (dados.produtoNome.length < 5) {
+        throw new Error('Nome do produto inválido');
+    }
+
+    // Preço obrigatório
+    if (dados.produtoPreco == null) {
+        throw new Error('Preço obrigatório');
+    }
+
+    // Preço positivo
+    if (dados.produtoPreco <= 0) {
+        throw new Error('Preço deve ser positivo');
+    }
+}
+
+/*
+    US01 - Criar pedido
+*/
+app.post('/pedidos', (req, res) => {
+
+    try {
+
+        const dados = req.body;
+
+        validarPedido(dados);
+
+        const pedido = {
+
+            codigo: contador++,
+
+            dataHora: new Date(),
+
+            clienteCpf: dados.clienteCpf,
+
+            clienteNome: dados.clienteNome,
+
+            produtoNome: dados.produtoNome,
+
+            produtoPreco: dados.produtoPreco,
+
+            situacao: 'aberto'
+        };
+
+        pedidos.push(pedido);
+
+        res.status(201).json(pedido);
+
+    } catch (error) {
+
+        res.status(400).json({
+            erro: error.message
+        });
+    }
+});
+
+/*
+    US02 - Listar pedidos
+*/
+app.get('/pedidos', (req, res) => {
+
+    try {
+
+        const situacao = req.query.situacao;
+
+        if (situacao) {
+
+            validarSituacao(situacao);
+
+            const filtrados = pedidos.filter(
+                p => p.situacao === situacao
+            );
+
+            return res.json(filtrados);
+        }
+
+        res.json(pedidos);
+
+    } catch (error) {
+
+        res.status(400).json({
+            erro: error.message
+        });
+    }
+});
+
+/*
+    US03 - Buscar pedido por código
+*/
+app.get('/pedidos/:codigo', (req, res) => {
+
+    try {
+
+        const codigo = parseInt(req.params.codigo);
+
+        if (isNaN(codigo)) {
+            throw new Error('Código inválido');
+        }
+
+        const pedido = pedidos.find(
+            p => p.codigo === codigo
+        );
+
+        if (!pedido) {
+            throw new Error('Pedido não encontrado');
+        }
+
+        res.json(pedido);
+
+    } catch (error) {
+
+        res.status(400).json({
+            erro: error.message
+        });
+    }
+});
+
+/*
+    US04 - Atualizar situação
+*/
+app.put('/pedidos/:codigo', (req, res) => {
+
+    try {
+
+        const codigo = parseInt(req.params.codigo);
+
+        if (isNaN(codigo)) {
+            throw new Error('Código inválido');
+        }
+
+        const situacao = req.body.situacao;
+
+        if (!situacao) {
+            throw new Error('Situação obrigatória');
+        }
+
+        validarSituacao(situacao);
+
+        const pedido = pedidos.find(
+            p => p.codigo === codigo
+        );
+
+        if (!pedido) {
+            throw new Error('Pedido não encontrado');
+        }
+
+        pedido.situacao = situacao;
+
+        res.json(pedido);
+
+    } catch (error) {
+
+        res.status(400).json({
+            erro: error.message
+        });
+    }
+});
+
+/*
+    US05 - Deletar pedido
+*/
+app.delete('/pedidos/:codigo', (req, res) => {
+
+    try {
+
+        const codigo = parseInt(req.params.codigo);
+
+        if (isNaN(codigo)) {
+            throw new Error('Código inválido');
+        }
+
+        const index = pedidos.findIndex(
+            p => p.codigo === codigo
+        );
+
+        if (index === -1) {
+            throw new Error('Pedido não encontrado');
+        }
+
+        pedidos.splice(index, 1);
+
+        res.status(204).send();
+
+    } catch (error) {
+
+        res.status(400).json({
+            erro: error.message
+        });
+    }
+});
+
+/*
+    Iniciar servidor
+*/
+app.listen(3000, () => {
+
+    console.log('Servidor rodando na porta 3000');
+});
